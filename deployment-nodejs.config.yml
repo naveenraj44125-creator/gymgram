@@ -1,139 +1,92 @@
-# Gymgram Full-Stack Deployment Configuration
-
 aws:
   region: us-east-1
 
 lightsail:
-  instance_name: gymgram-app
-  static_ip: ""
-  
-  # Instance size configuration for full-stack app
-  bundle_id: "medium_3_0"  # 4GB RAM for Node.js + MongoDB + React build
-  
-  # Operating system blueprint configuration
-  blueprint_id: "ubuntu_22_04"
-
-  # Lightsail bucket configuration for media storage
+  instance_name: gymgram-prod
+  static_ip: 
+  bundle_id: small_3_0
+  blueprint_id: ubuntu_22_04
   bucket:
     enabled: true
-    name: "gymgram-media-storage"
-    access_level: "read_write"
-    bundle_id: "small_1_0"
+    name: gymgram-media-bucket
+    access_level: read_write
+    bundle_id: medium_1_0
 
 application:
   name: gymgram
-  version: "1.0.0"
+  version: 1.0.0
   type: nodejs
-  
   package_files:
-    - "./"
-  
+    - package.json
+    - package-lock.json
+    - server/**
+    - client/**
+    - public/**
+    - src/**
+    - test-setup.js
   package_fallback: true
-  
   environment_variables:
-    # Node.js Environment
+    APP_ENV: production
     NODE_ENV: production
-    PORT: "5000"
-    
-    # MongoDB Configuration
-    MONGODB_URI: mongodb://app_user:CHANGE_ME_app_password_123@localhost:27017/gymgram_prod
-    
-    # JWT Configuration
-    JWT_SECRET: "CHANGE_ME_jwt_secret_key_very_secure_123"
-    
-    # AWS S3 Configuration
+    PORT: 5000
+    MONGODB_URI: mongodb://localhost:27017/gymgram
+    JWT_SECRET: CHANGE_ME_jwt_secret_key_here
     AWS_REGION: us-east-1
-    AWS_S3_BUCKET: gymgram-media-storage
-    
-    # Client Configuration
-    CLIENT_URL: "http://gymgram-app.lightsail.aws.com"
-    
-    # Application Configuration
-    DB_NAME: gymgram_prod
-    DB_USER: app_user
-    DB_PASSWORD: CHANGE_ME_app_password_123
+    AWS_S3_BUCKET: gymgram-media-bucket
+    CLIENT_URL: https://INSTANCE_PUBLIC_IP
 
 dependencies:
-  # MongoDB Database
-  mongodb:
-    enabled: true
-    external: false
-    config:
-      version: "7.0"
-      database: "gymgram_prod"
-      auth_enabled: true
-      admin_user: "admin"
-      admin_password: "CHANGE_ME_admin_password_123"
-      app_user: "app_user"
-      app_password: "CHANGE_ME_app_password_123"
-      bind_ip: "127.0.0.1"
-      port: 27017
-  
-  # Node.js Runtime
-  nodejs:
-    enabled: true
-    config:
-      version: "20"
-      npm_version: "latest"
-  
-  # Git for deployment
   git:
     enabled: true
     config:
       install_lfs: false
-  
-  # Nginx as reverse proxy
-  nginx:
-    enabled: true
-    config:
-      sites:
-        gymgram:
-          server_name: "_"
-          root: "/var/www/gymgram/client/build"
-          index: "index.html"
-          locations:
-            - path: "/api"
-              proxy_pass: "http://localhost:5000"
-              proxy_set_headers:
-                - "Host $host"
-                - "X-Real-IP $remote_addr"
-                - "X-Forwarded-For $proxy_add_x_forwarded_for"
-                - "X-Forwarded-Proto $scheme"
-            - path: "/"
-              try_files: "$uri $uri/ /index.html"
-  
-  # PM2 for Node.js process management
-  pm2:
-    enabled: true
-    config:
-      app_name: "gymgram-server"
-      script: "server/server.js"
-      instances: 1
-      exec_mode: "fork"
-      watch: false
-      env:
-        NODE_ENV: "production"
-  
-  # Firewall configuration
   firewall:
     enabled: true
     config:
       allowed_ports:
-        - "22"    # SSH
-        - "80"    # HTTP
-        - "443"   # HTTPS
+        - 22
+        - 80
+        - 443
+        - 5000
       deny_all_other: true
+  mongodb:
+    enabled: true
+    external: false
+    config:
+      version: 6.0
+      root_password: CHANGE_ME_mongo_root_password_123
+      create_database: gymgram
+      create_user: gymgram_user
+      user_password: CHANGE_ME_mongo_user_password_123
+  nodejs:
+    enabled: true
+    config:
+      version: 18
+      package_manager: npm
+  pm2:
+    enabled: true
+    config:
+      app_name: gymgram-server
+      instances: 1
+      exec_mode: cluster
+      cwd: "/opt/bitnami/projects/gymgram/server"
+      script: "server.js"
+  nginx:
+    enabled: true
+    config:
+      serve_static: true
+      static_directory: "/opt/bitnami/projects/gymgram/client/build"
+      proxy_port: 5000
+      proxy_path: "/api"
 
 deployment:
   timeouts:
     ssh_connection: 120
-    command_execution: 900  # Longer timeout for npm build
-    health_check: 180
-  
+    command_execution: 900
+    health_check: 300
   retries:
     max_attempts: 3
     ssh_connection: 5
-  
   steps:
     pre_deployment:
       common:
@@ -145,7 +98,14 @@ deployment:
         enabled: true
         install_system_deps: true
         configure_services: true
-    
+    custom_commands:
+      pre_build:
+        - "cd /opt/bitnami/projects/gymgram && npm run install-deps"
+      build:
+        - "cd /opt/bitnami/projects/gymgram && npm run build"
+      post_build:
+        - "sudo chown -R bitnami:bitnami /opt/bitnami/projects/gymgram"
+        - "sudo chmod -R 755 /opt/bitnami/projects/gymgram"
     post_deployment:
       common:
         enabled: true
@@ -157,23 +117,14 @@ deployment:
         configure_application: true
         set_permissions: true
         restart_services: true
-      custom_commands:
-        - "cd /var/www/gymgram && npm install --production"
-        - "cd /var/www/gymgram/server && npm install --production"
-        - "cd /var/www/gymgram/client && npm install && npm run build"
-        - "chown -R www-data:www-data /var/www/gymgram/client/build"
-        - "pm2 delete gymgram-server || true"
-        - "pm2 start /var/www/gymgram/server/server.js --name gymgram-server"
-        - "pm2 save"
-        - "systemctl reload nginx"
-    
     verification:
       enabled: true
       health_check: true
       external_connectivity: true
       endpoints_to_test:
-        - "/api/health"
-        - "/"
+        - /
+        - /api/health
+      port: 80
 
 github_actions:
   triggers:
@@ -184,12 +135,11 @@ github_actions:
       - main
       - master
     workflow_dispatch: true
-  
   jobs:
     test:
       enabled: true
+      docker_test: false
       language_specific_tests: true
-    
     deployment:
       deploy_on_push: true
       deploy_on_pr: false
@@ -198,20 +148,29 @@ github_actions:
 
 monitoring:
   health_check:
-    endpoint: "/api/health"
+    endpoint: /api/health
+    max_attempts: 20
+    wait_between_attempts: 30
+    initial_wait: 90
     expected_content: "Gymgram API is running"
-    max_attempts: 15
-    wait_between_attempts: 20
-    initial_wait: 120  # Longer wait for Node.js startup
+    port: 80
 
 security:
   file_permissions:
-    web_files: "644"
-    directories: "755"
-    config_files: "600"
-    node_modules: "755"
+    web_files: 644
+    directories: 755
+    config_files: 600
+  ssl:
+    enabled: true
+    force_https: true
+    certificate_auto_renew: true
+  firewall:
+    strict_mode: true
+    rate_limiting: true
 
 backup:
   enabled: true
   retention_days: 7
-  backup_location: "/var/backups/gymgram-deployments"
+  backup_location: /var/backups/gymgram-deployments
+  backup_database: true
+  backup_uploads: true

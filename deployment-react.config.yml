@@ -18,7 +18,7 @@ lightsail:
   # Lightsail bucket configuration
   bucket:
     enabled: true
-    name: "gymgram-media-storage"
+    name: "gymgram-media-bucket"
     access_level: "read_write"
     bundle_id: "small_1_0"
 
@@ -37,16 +37,16 @@ application:
     # Database Configuration
     DB_TYPE: mongodb
     DB_HOST: localhost
-    DB_NAME: gymgram_prod
+    DB_NAME: gymgram
     DB_USER: app_user
     DB_PASSWORD: CHANGE_ME_secure_password_123
     # MongoDB specific (no authentication - local MongoDB)
-    MONGODB_URI: mongodb://localhost:27017/gymgram_prod
+    MONGODB_URI: mongodb://localhost:27017/gymgram
     MONGODB_PORT: "27017"
     # React specific
     REACT_APP_ENV: production
     BUILD_PATH: build
-    BUCKET_NAME: gymgram-media-storage
+    BUCKET_NAME: gymgram-media-bucket
     AWS_REGION: us-east-1
 
 dependencies:
@@ -57,7 +57,7 @@ dependencies:
     config:
       version: "8.0"
       root_password: "CHANGE_ME_root_password_123"
-      create_database: "gymgram_prod"
+      create_database: "gymgram"
       create_user: "app_user"
       user_password: "CHANGE_ME_secure_password_123"
   
@@ -67,7 +67,7 @@ dependencies:
     config:
       version: "13"
       postgres_password: "CHANGE_ME_postgres_password_123"
-      create_database: "gymgram_prod"
+      create_database: "gymgram"
       create_user: "app_user"
       user_password: "CHANGE_ME_secure_password_123"
   
@@ -76,7 +76,7 @@ dependencies:
     external: false
     config:
       version: "7.0"
-      database: "gymgram_prod"
+      database: "gymgram"
       auth_enabled: true
       admin_user: "admin"
       admin_password: "CHANGE_ME_admin_password_123"
