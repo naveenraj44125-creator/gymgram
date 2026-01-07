@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#E91E63" />
+    <meta name="description" content="Gymgram - A social media platform for gym enthusiasts to share their fitness journey" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
+    <!-- Preconnect to external fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Google Fonts - Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Material Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons" />
+    
+    <title>Gymgram - Share Your Fitness Journey</title>
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Gymgram - Share Your Fitness Journey" />
+    <meta property="og:description" content="Connect with fellow gym enthusiasts, share workout photos and videos, track your progress, and discover new fitness inspiration." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://gymgram.app" />
+    <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gymgram - Share Your Fitness Journey" />
+    <meta name="twitter:description" content="Connect with fellow gym enthusiasts, share workout photos and videos, track your progress, and discover new fitness inspiration." />
+    <meta name="twitter:image" content="%PUBLIC_URL%/logo512.png" />
+    
+    <!-- Additional Meta Tags -->
+    <meta name="keywords" content="gym, fitness, workout, social media, bodybuilding, strength training, exercise, health" />
+    <meta name="author" content="Gymgram Team" />
+    
+    <style>
+      /* Loading screen styles */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #E91E63 0%, #FF5722 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-family: 'Inter', sans-serif;
+        z-index: 9999;
+      }
+      
+      .loading-logo {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        opacity: 0.9;
+      }
+      
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        border-top: 3px solid white;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      
+      .loading-text {
+        margin-top: 1rem;
+        font-size: 1rem;
+        opacity: 0.8;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+      
+      /* Hide loading screen when React loads */
+      .loaded .loading-screen {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>
+      <div style="text-align: center; padding: 2rem; font-family: Arial, sans-serif;">
+        <h1>💪 Gymgram</h1>
+        <p>You need to enable JavaScript to run this app.</p>
+        <p>Gymgram is a modern web application that requires JavaScript to function properly.</p>
+      </div>
+    </noscript>
+    
+    <!-- Loading screen shown while React loads -->
+    <div class="loading-screen" id="loading-screen">
+      <div class="loading-logo">💪 Gymgram</div>
+      <div class="loading-spinner"></div>
+      <div class="loading-text">Loading your fitness community...</div>
+    </div>
+    
+    <div id="root"></div>
+    
+    <script>
+      // Hide loading screen once React loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          document.body.classList.add('loaded');
+        }, 500);
+      });
+    </script>
+  </body>
+</html>

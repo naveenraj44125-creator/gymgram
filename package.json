@@ -1,0 +1,20 @@
+{
+  "name": "gymgram",
+  "version": "1.0.0",
+  "description": "A social media platform for gym enthusiasts to share photos and videos",
+  "main": "server/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && npm run dev",
+    "client": "cd client && npm start",
+    "install-deps": "npm install && cd server && npm install && cd ../client && npm install",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start"
+  },
+  "keywords": ["social media", "gym", "fitness", "instagram", "photos", "videos"],
+  "author": "Gymgram Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^7.6.0"
+  }
+}
