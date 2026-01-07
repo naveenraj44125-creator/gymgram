@@ -1,0 +1,182 @@
+# gymgram Deployment Configuration
+
+aws:
+  region: us-east-1
+
+lightsail:
+  instance_name: react-gymgram
+  static_ip: ""
+  
+  # Instance size configuration (optional)
+  # If not specified, defaults are: small_3_0 (2GB) for traditional apps, medium_3_0 (4GB) for Docker apps
+  bundle_id: "small_3_0"
+  
+  # Operating system blueprint configuration (optional)
+  # If not specified, defaults to ubuntu_22_04
+  blueprint_id: "ubuntu_22_04"
+
+  # Lightsail bucket configuration
+  bucket:
+    enabled: true
+    name: "gymgram-media-storage"
+    access_level: "read_write"
+    bundle_id: "small_1_0"
+
+application:
+  name: gymgram
+  version: "1.0.0"
+  type: react
+  
+  package_files:
+    - "./"
+  
+  package_fallback: true
+  
+  environment_variables:
+    APP_ENV: production
+    # Database Configuration
+    DB_TYPE: mongodb
+    DB_HOST: localhost
+    DB_NAME: gymgram_prod
+    DB_USER: app_user
+    DB_PASSWORD: CHANGE_ME_secure_password_123
+    # MongoDB specific (no authentication - local MongoDB)
+    MONGODB_URI: mongodb://localhost:27017/gymgram_prod
+    MONGODB_PORT: "27017"
+    # React specific
+    REACT_APP_ENV: production
+    BUILD_PATH: build
+    BUCKET_NAME: gymgram-media-storage
+    AWS_REGION: us-east-1
+
+dependencies:
+  # Database Dependencies
+  mysql:
+    enabled: false
+    external: false
+    config:
+      version: "8.0"
+      root_password: "CHANGE_ME_root_password_123"
+      create_database: "gymgram_prod"
+      create_user: "app_user"
+      user_password: "CHANGE_ME_secure_password_123"
+  
+  postgresql:
+    enabled: false
+    external: false
+    config:
+      version: "13"
+      postgres_password: "CHANGE_ME_postgres_password_123"
+      create_database: "gymgram_prod"
+      create_user: "app_user"
+      user_password: "CHANGE_ME_secure_password_123"
+  
+  mongodb:
+    enabled: true
+    external: false
+    config:
+      version: "7.0"
+      database: "gymgram_prod"
+      auth_enabled: true
+      admin_user: "admin"
+      admin_password: "CHANGE_ME_admin_password_123"
+      app_user: "app_user"
+      app_password: "CHANGE_ME_app_password_123"
+      bind_ip: "127.0.0.1"
+      port: 27017
+  
+  git:
+    enabled: true
+    config:
+      install_lfs: false
+  
+  firewall:
+    enabled: true
+    config:
+      allowed_ports:
+        - "22"    # SSH
+        - "80"    # HTTP
+        - "443"   # HTTPS
+      deny_all_other: true
+
+deployment:
+  
+  timeouts:
+    ssh_connection: 120
+    command_execution: 600
+    health_check: 180
+  
+  retries:
+    max_attempts: 3
+    ssh_connection: 5
+  
+  steps:
+    pre_deployment:
+      common:
+        enabled: true
+        update_packages: true
+        create_directories: true
+        backup_enabled: true
+      dependencies:
+        enabled: true
+        install_system_deps: true
+        configure_services: true
+    
+    post_deployment:
+      common:
+        enabled: true
+        verify_extraction: true
+        create_env_file: true
+        cleanup_temp_files: true
+      dependencies:
+        enabled: true
+        configure_application: true
+        set_permissions: true
+        restart_services: true
+    
+    verification:
+      enabled: true
+      health_check: true
+      external_connectivity: true
+      endpoints_to_test:
+        - "/api/health"
+
+github_actions:
+  triggers:
+    push_branches:
+      - main
+      - master
+    pull_request_branches:
+      - main
+      - master
+    workflow_dispatch: true
+  
+  jobs:
+    test:
+      enabled: true
+      language_specific_tests: true
+    
+    deployment:
+      deploy_on_push: true
+      deploy_on_pr: false
+      artifact_retention_days: 1
+      create_summary: true
+
+monitoring:
+  health_check:
+    endpoint: "/api/health"
+    expected_content: "root"
+    max_attempts: 15
+    wait_between_attempts: 20
+    initial_wait: 60
+
+security:
+  file_permissions:
+    web_files: "644"
+    directories: "755"
+    config_files: "600"
+
+backup:
+  enabled: true
+  retention_days: 7
+  backup_location: "/var/backups/gymgram-deployments"

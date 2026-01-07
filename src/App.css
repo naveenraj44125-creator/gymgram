@@ -1,0 +1,46 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 40px;
+  color: white;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+}
+
+.success-message {
+  background-color: #d4edda;
+  color: #155724;
+  padding: 15px;
+  border-radius: 5px;
+  margin: 20px 0;
+  font-size: 16px;
+}
+
+.info-section {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 20px;
+  border-radius: 10px;
+  margin: 20px 0;
+  max-width: 600px;
+}
+
+.info-section h3 {
+  margin-top: 0;
+  color: #61dafb;
+}
+
+.info-section p, .info-section li {
+  font-size: 14px;
+  text-align: left;
+}
+
+.info-section ul {
+  text-align: left;
+}
