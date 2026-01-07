@@ -25,29 +25,39 @@ lightsail:
 application:
   name: gymgram
   version: "1.0.0"
-  type: react
+  type: nodejs
   
   package_files:
-    - "./"
+    - "package.json"
+    - "package-lock.json"
+    - "server/"
+    - "client/"
+    - "public/"
+    - "src/"
+    - "test-setup.js"
   
   package_fallback: true
   
   environment_variables:
     APP_ENV: production
+    NODE_ENV: production
+    PORT: "5000"
     # Database Configuration
     DB_TYPE: mongodb
     DB_HOST: localhost
     DB_NAME: gymgram
-    DB_USER: app_user
+    DB_USER: gymgram_user
     DB_PASSWORD: CHANGE_ME_secure_password_123
-    # MongoDB specific (no authentication - local MongoDB)
+    # MongoDB URI for your application
     MONGODB_URI: mongodb://localhost:27017/gymgram
-    MONGODB_PORT: "27017"
-    # React specific
-    REACT_APP_ENV: production
-    BUILD_PATH: build
-    BUCKET_NAME: gymgram-media-bucket
+    # JWT and AWS Configuration
+    JWT_SECRET: CHANGE_ME_jwt_secret_key_here
     AWS_REGION: us-east-1
+    AWS_S3_BUCKET: gymgram-media-bucket
+    CLIENT_URL: https://INSTANCE_PUBLIC_IP
+    # React build configuration
+    REACT_APP_API_URL: https://INSTANCE_PUBLIC_IP/api
+    BUILD_PATH: build
 
 dependencies:
   # Database Dependencies
@@ -85,6 +95,29 @@ dependencies:
       bind_ip: "127.0.0.1"
       port: 27017
   
+  nodejs:
+    enabled: true
+    config:
+      version: "18"
+      package_manager: "npm"
+  
+  pm2:
+    enabled: true
+    config:
+      app_name: "gymgram-server"
+      instances: 1
+      exec_mode: "cluster"
+      cwd: "/opt/bitnami/projects/gymgram/server"
+      script: "server.js"
+  
+  nginx:
+    enabled: true
+    config:
+      serve_static: true
+      static_directory: "/opt/bitnami/projects/gymgram/client/build"
+      proxy_port: 5000
+      proxy_path: "/api"
+  
   git:
     enabled: true
     config:
@@ -97,14 +130,15 @@ dependencies:
         - "22"    # SSH
         - "80"    # HTTP
         - "443"   # HTTPS
+        - "5000"  # Node.js API (internal)
       deny_all_other: true
 
 deployment:
   
   timeouts:
     ssh_connection: 120
-    command_execution: 600
-    health_check: 180
+    command_execution: 900
+    health_check: 300
   
   retries:
     max_attempts: 3
@@ -121,6 +155,15 @@ deployment:
         enabled: true
         install_system_deps: true
         configure_services: true
+    
+    custom_commands:
+      pre_build:
+        - "cd /opt/bitnami/projects/gymgram && npm run install-deps"
+      build:
+        - "cd /opt/bitnami/projects/gymgram && npm run build"
+      post_build:
+        - "sudo chown -R bitnami:bitnami /opt/bitnami/projects/gymgram"
+        - "sudo chmod -R 755 /opt/bitnami/projects/gymgram"
     
     post_deployment:
       common:
@@ -139,7 +182,9 @@ deployment:
       health_check: true
       external_connectivity: true
       endpoints_to_test:
+        - "/"
         - "/api/health"
+      port: 80
 
 github_actions:
   triggers:
@@ -165,10 +210,11 @@ github_actions:
 monitoring:
   health_check:
     endpoint: "/api/health"
-    expected_content: "root"
-    max_attempts: 15
-    wait_between_attempts: 20
-    initial_wait: 60
+    expected_content: "Gymgram API is running"
+    max_attempts: 20
+    wait_between_attempts: 30
+    initial_wait: 90
+    port: 80
 
 security:
   file_permissions:
