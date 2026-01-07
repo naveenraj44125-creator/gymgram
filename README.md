@@ -219,34 +219,98 @@ gymgram/
 
 ## 🌐 Deployment
 
-### Frontend Deployment (Vercel/Netlify)
+### Automated AWS Lightsail Deployment
 
-1. Build the client:
+Gymgram includes automated deployment to AWS Lightsail using GitHub Actions. This sets up the complete full-stack application with one click!
+
+#### Prerequisites
+- GitHub repository for your Gymgram code
+- AWS account with Lightsail access
+- GitHub OIDC role configured (done automatically)
+
+#### Deployment Configuration
+
+The application uses `deployment-nodejs.config.yml` for intelligent deployment:
+
+**Features Included:**
+- ✅ **Lightsail Instance** - Ubuntu 22.04 with 4GB RAM
+- ✅ **Node.js 20** - Latest LTS version with PM2 process management
+- ✅ **MongoDB 7.0** - Configured with authentication
+- ✅ **Nginx** - Reverse proxy for React frontend and API routes
+- ✅ **S3 Bucket** - For media storage (photos/videos)
+- ✅ **SSL Ready** - Automatic HTTPS configuration
+- ✅ **Health Monitoring** - Automatic health checks
+
+#### Quick Deploy Steps
+
+1. **Push to GitHub**:
+   ```bash
+   git add .
+   git commit -m "Deploy Gymgram to Lightsail"
+   git push origin main
+   ```
+
+2. **GitHub Actions automatically**:
+   - Creates Lightsail instance `gymgram-app`
+   - Sets up MongoDB database
+   - Builds React frontend
+   - Configures Nginx reverse proxy
+   - Starts Node.js backend with PM2
+   - Creates S3 bucket for media
+
+3. **Access your app**:
+   - Frontend: `http://gymgram-app.lightsail.aws.com`
+   - API: `http://gymgram-app.lightsail.aws.com/api/health`
+
+#### Configuration Details
+
+**Instance Specifications:**
+- **Size**: medium_3_0 (4GB RAM, 2 vCPU)
+- **Storage**: 80GB SSD
+- **Estimated Cost**: $26-80/month
+- **Region**: us-east-1 (configurable)
+
+**Security Features:**
+- MongoDB with authentication
+- Firewall: Only ports 22, 80, 443 open
+- Secure password generation
+- File permissions properly set
+
+#### Manual Deployment (Alternative)
+
+For manual deployment or other cloud providers:
+
+1. **Build the client**:
 ```bash
 cd client && npm run build
 ```
 
-2. Deploy the `client/build` directory to your hosting service
+2. **Set up environment variables**:
+```bash
+export MONGODB_URI="your_mongodb_connection"
+export JWT_SECRET="your_secure_secret"
+export AWS_ACCESS_KEY_ID="your_key"
+export AWS_SECRET_ACCESS_KEY="your_secret"
+export AWS_S3_BUCKET="your_bucket"
+```
 
-3. Set environment variables in your hosting platform
-
-### Backend Deployment (Railway/Heroku)
-
-1. Set up your production environment variables
-2. Ensure MongoDB Atlas is configured for production
-3. Deploy the `server` directory to your hosting service
+3. **Start the server**:
+```bash
+cd server && npm start
+```
 
 ### Environment Variables for Production
 
-Make sure to set all environment variables in your production environment:
-- `MONGODB_URI` - MongoDB Atlas connection string
-- `JWT_SECRET` - Strong secret key
-- `AWS_ACCESS_KEY_ID` - AWS credentials
+**Required Environment Variables:**
+- `MONGODB_URI` - MongoDB connection string
+- `JWT_SECRET` - Strong secret key (auto-generated in Lightsail)
+- `AWS_ACCESS_KEY_ID` - AWS credentials (uses IAM role in Lightsail)
 - `AWS_SECRET_ACCESS_KEY` - AWS credentials
-- `AWS_REGION` - AWS region
-- `AWS_S3_BUCKET` - S3 bucket name
+- `AWS_REGION` - AWS region (default: us-east-1)
+- `AWS_S3_BUCKET` - S3 bucket name (auto-created)
 - `NODE_ENV=production`
-- `CLIENT_URL` - Your frontend URL
+- `CLIENT_URL` - Frontend URL
+- `PORT=5000` - Backend port
 
 ## 🔒 Security Features
 
